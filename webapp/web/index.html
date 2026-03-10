@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vireel</title>
+  <link rel="stylesheet" href="/web/styles.css">
+</head>
+<body>
+  <div class="app-root">
+    <header class="site-header" id="siteHeader">
+      <div class="header-inner">
+        <a href="#" class="header-brand" aria-label="Vireel home">Vireel</a>
+        <nav class="header-nav" aria-label="Main">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#pricing">Pricing</a>
+        </nav>
+        <div class="header-cta">
+          <button type="button" id="headerOpenAppBtn" class="btn btn-primary btn-header">Open App</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="hero" id="features">
+        <div class="hero-bg" aria-hidden="true"></div>
+        <div class="hero-glow" aria-hidden="true"></div>
+        <span class="hero-badge">Built for TikTok & Shorts</span>
+        <h1 class="hero-title">Turn YouTube into viral shorts</h1>
+        <p class="hero-sub">Paste a YouTube URL, get 9:16 clips with auto subtitles and blur letterbox—ready to post.</p>
+
+        <div class="clip-preview-row">
+          <div class="clip-card">
+            <div class="clip-thumb"></div>
+            <div class="clip-caption">"Oh my god he actually did it!"</div>
+          </div>
+          <div class="clip-card">
+            <div class="clip-thumb"></div>
+            <div class="clip-caption">"Wait… WHAT just happened?"</div>
+          </div>
+          <div class="clip-card">
+            <div class="clip-thumb"></div>
+            <div class="clip-caption">"Nah this is insane bro."</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="app-section" id="how-it-works">
+        <div class="app-card" id="app-card">
+          <nav class="tabs" role="tablist" aria-label="App sections">
+            <button type="button" class="tab active" data-tab="generate" role="tab" aria-selected="true">Generate</button>
+            <button type="button" class="tab" data-tab="library" role="tab" aria-selected="false">Library</button>
+          </nav>
+
+          <div class="tab-panels-wrap">
+            <section id="panelGenerate" class="tab-panel active generate-panel" role="tabpanel" aria-labelledby="tab-generate">
+              <div class="generate-layout">
+                <div class="generate-left">
+                  <div class="generate-input-card card-modern">
+                    <label for="youtubeUrl">YouTube URL</label>
+                    <input type="text" id="youtubeUrl" name="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" class="input-text">
+                    <div class="generate-settings-row">
+                      <label>Max clips <input type="number" id="maxClips" min="1" max="10" value="6" class="input-num"></label>
+                      <label>Clip length (sec) <input type="number" id="clipSeconds" min="15" max="120" value="45" class="input-num"></label>
+                    </div>
+                    <div class="generate-actions">
+                      <button id="generateBtn" class="btn btn-primary">Generate</button>
+                      <button type="button" id="generateLibraryBtn" class="btn btn-secondary">Library</button>
+                    </div>
+                  </div>
+
+                  <section class="generate-jobs-card card-modern" id="jobsListSection">
+                    <h2 class="card-title">Jobs</h2>
+                    <div class="jobs-cards-wrap" id="jobsCardsWrap"></div>
+                    <p class="jobs-list-empty generate-empty" id="jobsListEmpty" hidden>Paste a URL above and click Generate to get started.</p>
+                  </section>
+                </div>
+
+                <div class="generate-right">
+                  <section class="generate-output-card card-modern progress-section" id="progressSection" hidden>
+                    <h2 class="card-title">Output</h2>
+                    <div class="progress-stepper" id="progressStepper" aria-hidden="true">
+                      <span class="stepper-step" data-step="download">Download</span>
+                      <span class="stepper-step" data-step="transcribe">Transcribe</span>
+                      <span class="stepper-step" data-step="select">Select</span>
+                      <span class="stepper-step" data-step="render">Render</span>
+                      <span class="stepper-step" data-step="done">Done</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <p class="progress-stage" id="progressStage">—</p>
+                    <div class="progress-actions">
+                      <button type="button" id="cancelJobBtn" class="btn btn-ghost cancel-job-btn" hidden>Cancel</button>
+                    </div>
+                    <div class="activity-and-logs">
+                      <h3 class="activity-heading">Activity</h3>
+                      <ul class="activity-list" id="activityList"></ul>
+                      <button type="button" class="btn btn-ghost btn-sm" id="viewLogsBtn">View logs</button>
+                      <div class="logs-drawer" id="logsDrawer" hidden>
+                        <div class="logs-drawer-toolbar">
+                          <button type="button" class="btn btn-ghost btn-sm" id="copyLogsBtn">Copy</button>
+                        </div>
+                        <pre class="progress-log logs-drawer-pre" id="progressLog"></pre>
+                      </div>
+                    </div>
+                    <div id="progressErrorHelp" class="progress-error-help" hidden>
+                      <p class="progress-error-title" id="progressErrorTitle"></p>
+                      <button type="button" id="copyErrorBtn" class="btn btn-ghost btn-sm" hidden>Copy error</button>
+                    </div>
+                  </section>
+
+                  <section class="generate-results-card card-modern results-section" id="resultsSection" hidden>
+                    <h2 class="card-title">Clips from this run</h2>
+                    <div class="results-job-header" id="resultsJobHeader"></div>
+                    <p class="results-mismatch-banner" id="resultsMismatchBanner" hidden></p>
+                    <p class="results-source-line" id="resultsSourceLine"></p>
+                    <div class="clips-grid" id="clipsGrid"></div>
+                    <details class="win-scores-details" id="winScoresDetails">
+                      <summary>Scoring Debug (Top Candidates)</summary>
+                      <div class="win-scores-table-wrap" id="winScoresTableWrap"></div>
+                    </details>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section id="panelLibrary" class="tab-panel" role="tabpanel" aria-labelledby="tab-library">
+                <div id="libraryDebugLine" class="library-debug-line" hidden aria-live="polite"></div>
+                <!-- Library top bar: search, sort, selection mode -->
+                <div class="library-top-bar">
+                  <input type="text" id="librarySearchInput" class="library-search-input input-text" placeholder="Search clips" aria-label="Search clips">
+                  <label class="library-sort-label">Sort <select id="librarySortSelect"><option value="newest">Newest</option><option value="score">Highest Score</option></select></label>
+                  <button type="button" id="librarySelectModeBtn" class="btn btn-secondary">Select</button>
+                  <button type="button" id="libraryRefreshBtn" class="btn btn-ghost">Refresh</button>
+                  <button type="button" id="libraryDeleteAllBtn" class="btn btn-ghost">Delete All</button>
+                  <span class="library-tiktok-status" id="libraryTiktokStatus" aria-live="polite">—</span>
+                  <button type="button" id="libraryTiktokConnect" class="btn btn-secondary">Connect TikTok</button>
+                  <button type="button" id="libraryTiktokSetupToggle" class="btn btn-ghost">TikTok setup</button>
+                </div>
+                <!-- TIKTOK_SETUP_HELPER: setup panel shows URL Prefix and Redirect URI to paste into TikTok Developer Portal -->
+                <div id="libraryTiktokSetupPanel" class="library-tiktok-setup-panel" hidden aria-live="polite">
+                  <div class="library-tiktok-setup-row"><strong>TikTok setup</strong> <span id="libraryTiktokSetupStatus">—</span></div>
+                  <div class="library-tiktok-setup-row"><span class="library-tiktok-setup-label">APP_BASE_URL:</span> <span id="libraryTiktokSetupBaseUrl" class="library-tiktok-setup-value">—</span></div>
+                  <div class="library-tiktok-setup-row"><span class="library-tiktok-setup-label">URL Prefix (paste in TikTok portal):</span> <span id="libraryTiktokSetupPortalPrefix" class="library-tiktok-setup-value">—</span> <button type="button" id="libraryTiktokSetupCopyPrefix" class="btn btn-ghost btn-sm">Copy</button></div>
+                  <div class="library-tiktok-setup-row"><span class="library-tiktok-setup-label">Redirect URI (paste in TikTok portal):</span> <span id="libraryTiktokSetupRedirectUri" class="library-tiktok-setup-value">—</span> <button type="button" id="libraryTiktokSetupCopyRedirect" class="btn btn-ghost btn-sm">Copy</button></div>
+                  <div class="library-tiktok-setup-row"><a href="#" id="libraryTiktokSetupOpenJson" target="_blank" rel="noopener">Open setup (JSON)</a></div>
+                </div>
+                <div class="library-main">
+                  <div class="library-grid-wrap">
+                    <div class="clips-grid library-clips-grid" id="libraryGrid"></div>
+                  </div>
+                </div>
+                <p class="library-empty" id="libraryEmpty" hidden>No clips yet. Run a Generate job, then open Library.</p>
+                <!-- BULK_ACTION_BAR: sticky bar, shown when 1+ clips selected -->
+                <div class="library-bulk-bar" id="libraryBulkBar" hidden>
+                  <span class="library-bulk-count" id="libraryBulkCount">0 selected</span>
+                  <button type="button" id="libraryBulkDownload" class="btn btn-primary">Download Selected</button>
+                  <button type="button" id="libraryBulkPost" class="btn btn-secondary">Post Selected</button>
+                  <button type="button" id="libraryBulkDelete" class="btn btn-ghost">Delete Selected</button>
+                  <button type="button" id="libraryBulkClear" class="btn btn-ghost">Clear Selection</button>
+                </div>
+                <!-- Hidden sidebar: kept for existing panel refs (updateLibraryPanel etc.); not shown in layout -->
+                <aside class="library-side-panel library-side-panel-hidden" id="librarySidePanel" hidden aria-hidden="true">
+                  <h3 class="library-panel-title">Selected</h3>
+                  <p class="library-panel-count" id="libraryPanelCount">0 selected</p>
+                  <div class="library-panel-active" id="libraryPanelActive">—</div>
+                  <div class="library-panel-titles-wrap"><label>Titles</label><ul class="library-panel-titles" id="libraryPanelTitles"></ul></div>
+                  <div class="library-panel-caption-wrap"><label>Caption</label><p class="library-panel-caption" id="libraryPanelCaption">—</p></div>
+                  <div class="library-panel-hashtags-wrap"><label>Hashtags</label><p class="library-panel-hashtags" id="libraryPanelHashtags">—</p></div>
+                  <div class="library-panel-rename-wrap"><label for="libraryPanelFilename">Filename</label><input type="text" id="libraryPanelFilename" class="library-panel-filename" placeholder="slug-name" maxlength="60"><button type="button" id="libraryPanelRename" class="btn btn-secondary">Rename</button></div>
+                  <div class="library-panel-topn-wrap"><label for="libraryPanelTopN">Top N</label><input type="number" id="libraryPanelTopN" class="library-panel-topn-input" min="1" value="5"><button type="button" id="libraryPanelSelectTopN" class="btn btn-secondary">Select Top N</button><button type="button" id="libraryPanelDownloadTopN" class="btn btn-primary">Download Top N Post Pack</button></div>
+                  <div class="library-panel-actions"><button type="button" id="libraryPanelCopyCaption" class="btn btn-ghost">Copy Caption</button><button type="button" id="libraryPanelCopyHashtags" class="btn btn-ghost">Copy Hashtags</button><button type="button" id="libraryPanelCopyAll" class="btn btn-ghost">Copy All</button><button type="button" id="libraryPanelCopyPath" class="btn btn-ghost">Copy File Path</button><button type="button" id="libraryPanelDownloadPostPack" class="btn btn-secondary">Download Post Pack</button><button type="button" id="libraryPanelPrev" class="btn btn-ghost">Previous</button><button type="button" id="libraryPanelNext" class="btn btn-ghost">Next</button></div>
+                </aside>
+            </section>
+
+            <section id="panelAccount" class="tab-panel" hidden role="tabpanel" aria-labelledby="tab-account">
+              <div id="accountLoginWrap" class="account-login-wrap">
+                <h2>Login</h2>
+                <form id="loginForm" class="account-form">
+                  <label>Username <input type="text" id="loginUsername" autocomplete="username" required class="input-text"></label>
+                  <label>Password <input type="password" id="loginPassword" autocomplete="current-password" required class="input-text"></label>
+                  <button type="submit" class="btn btn-primary">Log in</button>
+                </form>
+                <h3>Register</h3>
+                <form id="registerForm" class="account-form">
+                  <label>Username <input type="text" id="registerUsername" autocomplete="username" required class="input-text"></label>
+                  <label>Password <input type="password" id="registerPassword" autocomplete="new-password" required class="input-text"></label>
+                  <button type="submit" class="btn btn-secondary">Register</button>
+                </form>
+                <p id="accountLoginError" class="account-error" hidden></p>
+              </div>
+              <div id="accountDashboardWrap" class="account-dashboard-wrap" hidden>
+                <h2>Usage today</h2>
+                <p><strong>User</strong> <span id="accountUser">—</span> · <strong>Plan</strong> <span id="accountPlan">—</span></p>
+                <p>Clips generated today: <span id="accountClipsToday">0</span> / <span id="accountMaxClips">0</span> (remaining <span id="accountRemainingClips">0</span>)</p>
+                <p>Minutes processed today: <span id="accountMinutesToday">0</span> / <span id="accountMaxMinutes">0</span> (remaining <span id="accountRemainingMinutes">0</span>)</p>
+                <p>Watermark: <span id="accountWatermark">—</span></p>
+                <button type="button" id="accountLogoutBtn" class="btn btn-ghost">Log out</button>
+                <button type="button" id="accountRefreshUsageBtn" class="btn btn-secondary">Refresh usage</button>
+                <div id="accountAdminWrap" class="account-admin-wrap" hidden>
+                  <h3>Admin — Set plan</h3>
+                  <p>User <input type="text" id="adminUsername" placeholder="username" class="input-text"> Plan <select id="adminPlan" class="input-select"><option value="free">free</option><option value="pro">pro</option><option value="turbo">turbo</option></select> <button type="button" id="adminSetPlanBtn" class="btn btn-primary">Set plan</button></p>
+                  <p id="adminSetPlanOut" class="account-admin-out"></p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <div class="features-row">
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Instant Clips</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🧠</div>
+          <div class="feature-title">AI Reaction Detection</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📱</div>
+          <div class="feature-title">TikTok Ready</div>
+        </div>
+      </div>
+
+      <section class="footer-section pricing-section" id="pricing">
+        <h2 class="pricing-title">Pricing</h2>
+        <div class="pricing-tiers">
+          <div class="pricing-tier">
+            <h3>Creator</h3>
+            <p class="pricing-price">$20<span>/mo</span></p>
+            <p class="pricing-clips">75 clips/month</p>
+            <button type="button" class="btn btn-secondary pricing-cta" disabled>Coming soon</button>
+          </div>
+          <div class="pricing-tier pricing-tier-featured">
+            <h3>Pro</h3>
+            <p class="pricing-price">$50<span>/mo</span></p>
+            <p class="pricing-clips">150 clips/month</p>
+            <button type="button" class="btn btn-primary pricing-cta" disabled>Coming soon</button>
+          </div>
+          <div class="pricing-tier">
+            <h3>Elite</h3>
+            <p class="pricing-price">$100<span>/mo</span></p>
+            <p class="pricing-clips">Unlimited clips</p>
+            <button type="button" class="btn btn-secondary pricing-cta" disabled>Coming soon</button>
+          </div>
+        </div>
+        <footer class="app-footer">
+          <div class="footer-inner">
+            <a href="#features" class="footer-link">Features</a>
+            <a href="#how-it-works" class="footer-link">How it works</a>
+            <a href="#pricing" class="footer-link">Pricing</a>
+            <span class="footer-brand">Vireel</span>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <details class="server-logs-details" id="serverLogsDetails">
+      <summary>Server Logs (last 200 lines)</summary>
+      <pre class="server-logs-pre" id="serverLogsPre"></pre>
+    </details>
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <div id="paywallModal" class="paywall-modal" hidden role="dialog" aria-labelledby="paywallModalTitle" aria-modal="true">
+      <div class="paywall-modal-backdrop"></div>
+      <div class="paywall-modal-content">
+        <h2 id="paywallModalTitle">Free limit reached</h2>
+        <p>You've used your 3 free clips. Upgrade to continue generating.</p>
+        <a href="#pricing" class="btn btn-primary paywall-cta">View Pricing</a>
+        <button type="button" class="paywall-modal-close btn btn-ghost">Close</button>
+      </div>
+    </div>
+  </div>
+  <!-- PROD_API_BASE_URL: Backend replaces __API_BASE_PLACEHOLDER__ when serving (local vs deployed). For Vercel, set window.__API_BASE__ before this script to the Render backend URL. -->
+  <script>
+    window.__API_BASE__ = typeof window.__API_BASE__ !== 'undefined' ? window.__API_BASE__ : '__API_BASE_PLACEHOLDER__';
+  </script>
+  <script src="/web/app.js"></script>
+</body>
+</html>

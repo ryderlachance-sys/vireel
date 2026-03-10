@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+requests
+psutil
+openai
+faster-whisper
+Pillow
+numpy
+opencv-python-headless

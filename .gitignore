@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Env and secrets
+.env
+
+# Build / runtime
+outputs/
+node_modules/
+*.log
+
+# Video / large media (do not track; keep local files only)
+*.mp4
+*.mov
+*.webm
+*.mkv
+
+# Project-specific
+config.json
+cookies.txt
+secrets/
+secrets/*.json
+outputs/queue.json
+outputs/worker_state.json
+outputs/worker_log.txt
+outputs/enqueue_results.json
+outputs/upload_results.json

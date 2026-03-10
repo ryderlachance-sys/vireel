@@ -1,0 +1,23 @@
+YouTube cookies setup (one-time)
+================================
+
+When Generate fails with "Sign in to confirm you're not a bot", do this:
+
+1. In Chrome, open: https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc
+   (Extension: "Get cookies.txt LOCALLY")
+
+2. Click "Add to Chrome" / Install.
+
+3. Go to https://www.youtube.com and make sure you're logged in.
+
+4. Click the extension icon -> "Get cookies.txt LOCALLY" -> it downloads a file.
+
+5. Rename that file to:  cookies.txt
+
+6. Move it into your Clipper folder so the full path is:
+    C:\Users\ryder\clipper\cookies.txt
+   (Same folder as clip.py and run_web.bat.)
+
+7. Run Generate again. The app will use cookies.txt automatically.
+
+Done. You can delete this COOKIES_SETUP.txt file after that.
