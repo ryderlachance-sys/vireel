@@ -1404,6 +1404,16 @@ async def favicon():
     """Return 204 so the browser stops requesting favicon and we avoid 404 in logs."""
     return Response(status_code=204)
 
+
+@app.get("/tiktokdtPToudEXqf3pJumbbQVb7oKyzoi5efQ.txt")
+async def tiktok_verification():
+    """Serve TikTok domain verification file from domain root."""
+    path = WEB_DIR / "tiktokdtPToudEXqf3pJumbbQVb7oKyzoi5efQ.txt"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(path, media_type="text/plain")
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     p = WEB_DIR / "index.html"
