@@ -908,14 +908,28 @@ def _run_job(job_id: str, url: str, max_clips: int, clip_seconds: int, use_ollam
                 try:
                     if output_log.is_file():
                         lines = output_log.read_text(encoding="utf-8", errors="replace").strip().splitlines()
-                        for line in reversed(lines):
-                            line = (line or "").strip()
-                            if "[ERROR]" in line:
-                                err_from_log = line.replace("[ERROR] ", "").strip() or line
-                                break
-                            if "timed out" in line.lower() or "stalled" in line.lower() or "Download failed" in line:
-                                err_from_log = line
-                                break
+                        log_text = "\n".join(lines).lower()
+                        # YouTube bot/sign-in challenge: show clear message (from clip.py or from raw yt-dlp log)
+                        if (
+                            "requires cookies" in log_text
+                            or "sign in to confirm" in log_text
+                            or ("not a bot" in log_text and ("youtube" in log_text or "cookies" in log_text))
+                        ):
+                            err_from_log = "This YouTube video requires cookies or a local download environment."
+                        if not err_from_log:
+                            for line in lines:
+                                if "error" in line.lower() and "youtube" in line.lower() and "bot" in line.lower():
+                                    err_from_log = "This YouTube video requires cookies or a local download environment."
+                                    break
+                        if not err_from_log:
+                            for line in reversed(lines):
+                                line = (line or "").strip()
+                                if "[ERROR]" in line:
+                                    err_from_log = line.replace("[ERROR] ", "").strip() or line
+                                    break
+                                if "timed out" in line.lower() or "stalled" in line.lower() or "Download failed" in line:
+                                    err_from_log = line
+                                    break
                 except Exception:
                     pass
                 j["error"] = err_from_log if err_from_log else err_default

@@ -1725,7 +1725,7 @@
               if (progressErrorHelp) {
                 progressErrorHelp.hidden = false;
                 var titleEl = document.getElementById('progressErrorTitle');
-                if (titleEl) titleEl.textContent = (j.stage === 'download' ? 'YouTube download failed.' : 'Job failed.');
+                if (titleEl) titleEl.textContent = (j.error && String(j.error).trim()) ? String(j.error).trim() : (j.stage === 'download' ? 'YouTube download failed.' : 'Job failed.');
               }
               if (copyErrorBtn) copyErrorBtn.hidden = false;
               if (j.clips && j.clips.length) {

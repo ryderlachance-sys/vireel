@@ -396,8 +396,42 @@ def run(cmd, step_name, timeout_sec=None):
         sys.exit(1)
 
 
-def _run_ytdlp_download(url, output_template, timeout_sec, stall_sec, progress_cb=None):
-    """Run yt-dlp with streaming output, hard timeout, and no-output stall detection. Raises on failure."""
+def _get_cookies_path():
+    """Return path to cookies file if it exists; prefer YT_DLP_COOKIES env, else REPO_ROOT/cookies.txt."""
+    env_path = (os.environ.get("YT_DLP_COOKIES") or "").strip()
+    if env_path:
+        p = Path(env_path)
+        if p.is_file():
+            return p
+    p = REPO_ROOT / "cookies.txt"
+    return p if p.is_file() else None
+
+
+def _is_ytdlp_signin_challenge(text):
+    """True if yt-dlp output indicates YouTube bot/sign-in challenge."""
+    if not text:
+        return False
+    lower = text.lower()
+    # Exact and partial phrases (yt-dlp / YouTube wording)
+    if "sign in to confirm" in lower and "bot" in lower:
+        return True
+    if "confirm you're not a bot" in lower or "confirm you are not a bot" in lower:
+        return True
+    if "use --cookies-from-browser or --cookies" in lower or "use --cookies" in lower:
+        return True
+    if "--cookies" in lower and ("bot" in lower or "sign in" in lower):
+        return True
+    # [youtube] ... Sign in to confirm ...
+    if "[youtube]" in lower and "sign in" in lower and "confirm" in lower:
+        return True
+    return False
+
+
+def _run_ytdlp_download(url, output_template, timeout_sec, stall_sec, progress_cb=None, cookies_path=None):
+    """Run yt-dlp with streaming output, hard timeout, and no-output stall detection.
+    Returns (True, output) on success; (False, output) on non-zero exit. Raises RuntimeError on timeout/stall.
+    When cookies_path is set, adds --cookies before url.
+    """
     start_ts = datetime.now().isoformat()
     print(f"[DL_DEBUG] url={url!r} output_template={output_template!r} timeout_sec={timeout_sec} stall_sec={stall_sec} start={start_ts}", flush=True)
     cmd = [
@@ -408,8 +442,10 @@ def _run_ytdlp_download(url, output_template, timeout_sec, stall_sec, progress_c
         "-o", output_template,
         "--socket-timeout", "30",
         "--retries", "3",
-        url,
     ]
+    if cookies_path:
+        cmd.extend(["--cookies", str(cookies_path)])
+    cmd.append(url)
     proc = subprocess.Popen(
         cmd,
         cwd=WORK,
@@ -421,10 +457,12 @@ def _run_ytdlp_download(url, output_template, timeout_sec, stall_sec, progress_c
         bufsize=1,
     )
     last_output_time = [time.time()]
+    collected = []
 
     def read_stream():
         try:
             for line in iter(proc.stdout.readline, ""):
+                collected.append(line)
                 print(line, end="", flush=True)
                 last_output_time[0] = time.time()
                 if progress_cb and line.strip():
@@ -472,13 +510,14 @@ def _run_ytdlp_download(url, output_template, timeout_sec, stall_sec, progress_c
             except subprocess.TimeoutExpired:
                 proc.kill()
                 proc.wait()
+    output = "".join(collected)
     if proc.returncode != 0:
         end_ts = datetime.now().isoformat()
         print(f"[DL_DEBUG] end={end_ts} failure=exit_code_{proc.returncode}", flush=True)
-        print(f"\n[ERROR] Download failed (exit code {proc.returncode}). Try again or use cookies.", file=sys.stderr)
-        sys.exit(1)
+        return (False, output)
     end_ts = datetime.now().isoformat()
     print(f"[DL_DEBUG] end={end_ts} success", flush=True)
+    return (True, output)
 
 
 class _Seg:
@@ -1838,19 +1877,53 @@ def main():
         else:
             _progress("download", 5, "Downloading video")
             print(f"\n[1/6] Downloading to {output_template}...")
+            COOKIES_MSG = "This YouTube video requires cookies or a local download environment."
             try:
                 def _download_progress_line(line):
                     if line and len(line) <= 120:
                         _progress("download", 5, line)
                     elif line:
                         _progress("download", 5, line[:117] + "...")
-                _run_ytdlp_download(
+                print(f"[YTDLP_ATTEMPT] mode=normal", flush=True)
+                ok, out = _run_ytdlp_download(
                     url,
                     output_template,
                     timeout_sec=DOWNLOAD_TIMEOUT_SEC,
                     stall_sec=DOWNLOAD_STALL_NO_OUTPUT_SEC,
                     progress_cb=_download_progress_line,
+                    cookies_path=None,
                 )
+                if not ok:
+                    signin = _is_ytdlp_signin_challenge(out)
+                    if signin:
+                        print(f"[YTDLP_BLOCKED] detected_signin_challenge=true", flush=True)
+                    # If output hints at bot/cookies even without exact match, treat as sign-in for message
+                    if not signin and out and ("bot" in out.lower() or "cookies" in out.lower()) and "[youtube]" in out.lower():
+                        signin = True
+                        print(f"[YTDLP_BLOCKED] detected_signin_challenge=true (fallback)", flush=True)
+                    cookies_path = _get_cookies_path()
+                    if signin and cookies_path:
+                        print(f"[YTDLP_COOKIES] using={cookies_path}", flush=True)
+                        print(f"[YTDLP_ATTEMPT] mode=cookies", flush=True)
+                        ok2, out2 = _run_ytdlp_download(
+                            url,
+                            output_template,
+                            timeout_sec=DOWNLOAD_TIMEOUT_SEC,
+                            stall_sec=DOWNLOAD_STALL_NO_OUTPUT_SEC,
+                            progress_cb=_download_progress_line,
+                            cookies_path=cookies_path,
+                        )
+                        if not ok2:
+                            print(f"[YTDLP_FAIL_FINAL] reason=cookies_retry_failed", flush=True)
+                            print(f"\n[ERROR] {COOKIES_MSG}", file=sys.stderr)
+                            sys.exit(1)
+                    elif signin:
+                        print(f"[YTDLP_FAIL_FINAL] reason=no_cookies", flush=True)
+                        print(f"\n[ERROR] {COOKIES_MSG}", file=sys.stderr)
+                        sys.exit(1)
+                    else:
+                        print(f"\n[ERROR] Download failed (exit code 1). Try again or use cookies.", file=sys.stderr)
+                        sys.exit(1)
             except RuntimeError as e:
                 err_msg = str(e)
                 print(f"\n[ERROR] {err_msg}", file=sys.stderr)
